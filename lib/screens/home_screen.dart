@@ -1,9 +1,10 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
-import '../widgets/content_panel.dart';
 import '../widgets/release_selector.dart';
 import '../widgets/theme_switcher.dart';
 import '../services/url_fetcher.dart';
+import 'markdown_screen.dart';
+import 'plain_text_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,18 +16,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isDarkMode = false;
   String? _selectedReleasePage;
-  final TextEditingController _leftTextController = TextEditingController();
-  final TextEditingController _rightTextController = TextEditingController();
+  String? _fetchedContent;
   bool _isLoading = false;
   String? _errorMessage;
   final UrlFetcherService _urlFetcher = UrlFetcherService();
-
-  @override
-  void dispose() {
-    _leftTextController.dispose();
-    _rightTextController.dispose();
-    super.dispose();
-  }
 
   Future<void> _fetchReleaseNotes() async {
     if (_selectedReleasePage == null) return;
@@ -40,8 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final content =
           await _urlFetcher.fetchReleaseNotes(_selectedReleasePage!);
       setState(() {
-        _leftTextController.text = content;
-        _rightTextController.text = content;
+        _fetchedContent = content;
       });
     } catch (e) {
       setState(() {
@@ -51,6 +43,34 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  void _navigateToMarkdownView() {
+    if (_fetchedContent != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MarkdownScreen(
+            content: _fetchedContent!,
+            releaseVersion: _selectedReleasePage!,
+          ),
+        ),
+      );
+    }
+  }
+
+  void _navigateToPlainTextView() {
+    if (_fetchedContent != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PlainTextScreen(
+            content: _fetchedContent!,
+            releaseVersion: _selectedReleasePage!,
+          ),
+        ),
+      );
     }
   }
 
@@ -74,7 +94,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ReleaseSelector(
                 selectedRelease: _selectedReleasePage,
                 onReleaseSelected: (release) {
-                  setState(() => _selectedReleasePage = release);
+                  setState(() {
+                    _selectedReleasePage = release;
+                    _fetchedContent = null;
+                  });
+                  if (release != null) {
+                    _fetchReleaseNotes();
+                  }
                 },
               ),
               if (_errorMessage != null)
@@ -82,39 +108,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
                     _errorMessage!,
-                    style: TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.red),
                   ),
                 ),
-              if (_selectedReleasePage != null)
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CircularProgressIndicator(),
+                ),
+              if (_selectedReleasePage != null && _fetchedContent != null)
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: ContentPanel(
-                          title: 'Markdown',
-                          controller: _leftTextController,
-                          onGeneratePress: _fetchReleaseNotes,
-                          onCopyPress: () {
-                            // TODO: Implement copy
-                          },
-                          isLoading: _isLoading,
-                        ),
+                      ElevatedButton(
+                        onPressed: _navigateToMarkdownView,
+                        child: const Text('View Markdown'),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ContentPanel(
-                          title: 'Plain Text',
-                          controller: _rightTextController,
-                          onGeneratePress: () {
-                            // TODO: Implement plain text conversion
-                          },
-                          onCopyPress: () {
-                            // TODO: Implement copy
-                          },
-                          isLoading: _isLoading,
-                        ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: _navigateToPlainTextView,
+                        child: const Text('View Plain Text'),
                       ),
                     ],
                   ),
