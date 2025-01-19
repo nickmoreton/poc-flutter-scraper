@@ -123,4 +123,84 @@ class ReleaseNotesModel {
   Section getOptionalSection(int index) {
     return optionalSections[index];
   }
+
+  // Add these methods to your ReleaseNotesModel class
+
+  String toMarkdown() {
+    StringBuffer buffer = StringBuffer();
+
+    // Main title and initial instructions
+    if (mainTitle != null) {
+      buffer.writeln('# $mainTitle');
+      buffer.writeln();
+      buffer.writeln(
+          'Add a link to the commit or file for each consideration if you made any code changes.');
+      buffer.writeln();
+      buffer.writeln('## Code reviewing a consideration.');
+      buffer.writeln();
+      buffer.writeln(
+          'Use the tick box to indicate a consideration has been code reviewed as OK');
+      buffer.writeln();
+    }
+
+    // What's New sections (optional sections)
+    for (var section in optionalSections) {
+      if (section.title != null) {
+        buffer.writeln('### ${section.title}');
+        for (var subSection in section.subSections) {
+          if (subSection.title != null) {
+            buffer.writeln('  - [ ] [${subSection.title}](${subSection.url})');
+          }
+        }
+        buffer.writeln();
+      }
+    }
+
+    // Other sections
+    for (var section in sections) {
+      if (section.title != null) {
+        buffer.writeln('### ${section.title}');
+        for (var subSection in section.subSections) {
+          if (subSection.title != null) {
+            buffer.writeln('  - [ ] [${subSection.title}](${subSection.url})');
+          }
+        }
+        buffer.writeln();
+      }
+    }
+
+    return buffer.toString();
+  }
+
+  String toPlainText() {
+    StringBuffer buffer = StringBuffer();
+
+    // What's New sections (optional sections)
+    for (var section in optionalSections) {
+      buffer.writeln('====================================\n');
+      if (section.title != null) {
+        buffer.writeln('${section.title}\n${section.url}\n');
+        for (var subSection in section.subSections) {
+          if (subSection.title != null) {
+            buffer.writeln('  ${subSection.title}\n  ${subSection.url}\n');
+          }
+        }
+      }
+    }
+
+    // Other sections
+    for (var section in sections) {
+      buffer.writeln('====================================\n');
+      if (section.title != null) {
+        buffer.writeln('${section.title}\n${section.url}\n');
+        for (var subSection in section.subSections) {
+          if (subSection.title != null) {
+            buffer.writeln('  ${subSection.title}\n  ${subSection.url}\n');
+          }
+        }
+      }
+    }
+
+    return buffer.toString();
+  }
 }

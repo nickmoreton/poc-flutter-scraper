@@ -33,11 +33,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     try {
-      final content =
-          await _urlFetcher.fetchReleaseNotes(_selectedReleasePage!);
+      final model = await _urlFetcher.fetchReleaseNotes(_selectedReleasePage!);
 
       // Pop the loading dialog
       Navigator.pop(context);
+
+      final formattedContent =
+          isMarkdown ? model.toMarkdown() : model.toPlainText();
 
       // Navigate to the appropriate screen
       Navigator.push(
@@ -45,11 +47,11 @@ class _HomeScreenState extends State<HomeScreen> {
         MaterialPageRoute(
           builder: (context) => isMarkdown
               ? MarkdownScreen(
-                  content: content.toString(),
+                  content: formattedContent,
                   releaseVersion: _selectedReleasePage!,
                 )
               : PlainTextScreen(
-                  content: content.toString(),
+                  content: formattedContent,
                   releaseVersion: _selectedReleasePage!,
                 ),
         ),
