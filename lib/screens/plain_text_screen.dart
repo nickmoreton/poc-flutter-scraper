@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class PlainTextScreen extends StatelessWidget {
   final String content;
@@ -12,8 +13,6 @@ class PlainTextScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print('PlainTextScreen build');
-    print(content);
     return Scaffold(
       appBar: AppBar(
         title: Text('Plain Text View - $releaseVersion'),
@@ -21,6 +20,23 @@ class PlainTextScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        // Add this actions property to the AppBar
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.copy),
+            tooltip: 'Copy to clipboard', // Optional tooltip
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: content)).then((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Content copied to clipboard'),
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              });
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
