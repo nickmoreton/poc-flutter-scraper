@@ -151,10 +151,16 @@ class _MyHomePageState extends State<MyHomePage> {
                     children: [
                       Expanded(
                         child: _buildPanel(
-                          title: 'Release Notes',
+                          title: 'Markdown',
                           controller: _leftTextController,
                           onGeneratePress: () {
-                            // Add generation logic here
+                            if (_selectedReleasePage != null) {
+                              final String fullUrl =
+                                  DocsConfig.getReleaseNotesUrl(
+                                      _selectedReleasePage!);
+                              print('Fetching release notes from: $fullUrl');
+                              // Future implementation will use this URL to fetch the content
+                            }
                             print(
                                 'Generating release notes for: $_selectedReleasePage');
                           },
@@ -166,7 +172,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildPanel(
-                          title: 'Summary',
+                          title: 'Plain Text',
                           controller: _rightTextController,
                           onGeneratePress: () {
                             // Add generation logic here

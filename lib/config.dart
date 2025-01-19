@@ -45,3 +45,30 @@ final Map<String, String> wagtailReleases = {
   "1.1.html": "Wagtail 1.1 release notes",
   "1.0.html": "Wagtail 1.0 release notes",
 };
+
+// Documentation URLs and paths
+class DocsConfig {
+  // Base URL for Wagtail documentation
+  static const String baseUrl = 'https://docs.wagtail.org/en/stable';
+
+  // Release notes specific paths
+  static const String releaseNotesPath = 'releases';
+
+  // Helper method to get full URL for a specific release
+  static String getReleaseNotesUrl(String version) {
+    return '$baseUrl/$releaseNotesPath/$version';
+  }
+}
+
+// Optional: Add a class for app-wide configuration
+class AppConfig {
+  // App name and version
+  static const String appName = 'Wagtail Release Notes Generator';
+  static const String appVersion = '1.0.0';
+
+  // API configuration (for future use)
+  static const int requestTimeout = 30; // seconds
+
+  // Default settings
+  static const bool debugMode = true;
+}
