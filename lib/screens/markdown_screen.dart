@@ -12,6 +12,8 @@ class MarkdownScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('MarkdownScreen build');
+    print(content);
     return Scaffold(
       appBar: AppBar(
         title: Text('Markdown View - $releaseVersion'),

@@ -12,6 +12,8 @@ class PlainTextScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('PlainTextScreen build');
+    print(content);
     return Scaffold(
       appBar: AppBar(
         title: Text('Plain Text View - $releaseVersion'),

@@ -1,17 +1,16 @@
 // lib/services/url_fetcher.dart
 
 import 'dart:io';
-
 import 'package:http/http.dart' as http;
-import 'package:html/parser.dart' as html_parser;
-import '../../config.dart';
+import '../models/release_notes_model.dart';
+import '../config.dart';
 
 class UrlFetcherService {
   static final UrlFetcherService _instance = UrlFetcherService._internal();
   factory UrlFetcherService() => _instance;
   UrlFetcherService._internal();
 
-  Future<String> fetchReleaseNotes(String version) async {
+  Future<ReleaseNotesModel> fetchReleaseNotes(String version) async {
     try {
       final url = DocsConfig.getReleaseNotesUrl(version);
 
@@ -28,10 +27,9 @@ class UrlFetcherService {
       ).timeout(Duration(seconds: AppConfig.requestTimeout));
 
       if (response.statusCode == 200) {
-        // Parse the HTML content and extract the body
-        final document = html_parser.parse(response.body);
-        final bodyContent = document.body?.text ?? '';
-        return bodyContent;
+        final model = ReleaseNotesModel(url: url);
+        await model.initialize(response.body);
+        return model;
       } else {
         throw HttpException(
             'Failed to load release notes: ${response.statusCode}');

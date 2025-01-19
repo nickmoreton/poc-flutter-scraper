@@ -16,60 +16,65 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isDarkMode = false;
   String? _selectedReleasePage;
-  String? _fetchedContent;
-  bool _isLoading = false;
-  String? _errorMessage;
   final UrlFetcherService _urlFetcher = UrlFetcherService();
 
-  Future<void> _fetchReleaseNotes() async {
+  Future<void> _fetchAndNavigate(BuildContext context, bool isMarkdown) async {
     if (_selectedReleasePage == null) return;
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
 
     try {
       final content =
           await _urlFetcher.fetchReleaseNotes(_selectedReleasePage!);
-      setState(() {
-        _fetchedContent = content;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to fetch release notes: $e';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
 
-  void _navigateToMarkdownView() {
-    if (_fetchedContent != null) {
+      // Pop the loading dialog
+      Navigator.pop(context);
+
+      // Navigate to the appropriate screen
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => MarkdownScreen(
-            content: _fetchedContent!,
-            releaseVersion: _selectedReleasePage!,
-          ),
+          builder: (context) => isMarkdown
+              ? MarkdownScreen(
+                  content: content.toString(),
+                  releaseVersion: _selectedReleasePage!,
+                )
+              : PlainTextScreen(
+                  content: content.toString(),
+                  releaseVersion: _selectedReleasePage!,
+                ),
         ),
       );
-    }
-  }
+    } catch (e) {
+      // Pop the loading dialog
+      Navigator.pop(context);
 
-  void _navigateToPlainTextView() {
-    if (_fetchedContent != null) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PlainTextScreen(
-            content: _fetchedContent!,
-            releaseVersion: _selectedReleasePage!,
-          ),
-        ),
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to fetch release notes: $e'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
       );
     }
   }
@@ -94,40 +99,21 @@ class _HomeScreenState extends State<HomeScreen> {
               ReleaseSelector(
                 selectedRelease: _selectedReleasePage,
                 onReleaseSelected: (release) {
-                  setState(() {
-                    _selectedReleasePage = release;
-                    _fetchedContent = null;
-                  });
-                  if (release != null) {
-                    _fetchReleaseNotes();
-                  }
+                  setState(() => _selectedReleasePage = release);
                 },
               ),
-              if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    _errorMessage!,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ),
-              if (_isLoading)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: CircularProgressIndicator(),
-                ),
-              if (_selectedReleasePage != null && _fetchedContent != null)
+              if (_selectedReleasePage != null)
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
                       ElevatedButton(
-                        onPressed: _navigateToMarkdownView,
+                        onPressed: () => _fetchAndNavigate(context, true),
                         child: const Text('View Markdown'),
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
-                        onPressed: _navigateToPlainTextView,
+                        onPressed: () => _fetchAndNavigate(context, false),
                         child: const Text('View Plain Text'),
                       ),
                     ],
