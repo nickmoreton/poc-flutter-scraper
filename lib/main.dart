@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'config.dart'; // Import the config file at the top
+import 'services/url_fetcher.dart';
 
 void main() {
   runApp(const MyApp());
@@ -29,12 +30,45 @@ class _MyHomePageState extends State<MyHomePage> {
   String? _selectedReleasePage;
   final TextEditingController _leftTextController = TextEditingController();
   final TextEditingController _rightTextController = TextEditingController();
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  // Create an instance of UrlFetcherService
+  final UrlFetcherService _urlFetcher = UrlFetcherService();
 
   @override
   void dispose() {
     _leftTextController.dispose();
     _rightTextController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchReleaseNotes() async {
+    if (_selectedReleasePage == null) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final content =
+          await _urlFetcher.fetchReleaseNotes(_selectedReleasePage!);
+      setState(() {
+        _leftTextController.text = content;
+        // For now, we'll just copy the content to the right panel
+        // Later we can add plain text conversion
+        _rightTextController.text = content;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to fetch release notes: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Widget _buildPanel({
@@ -143,6 +177,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
               if (_selectedReleasePage != null) ...[
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -153,17 +195,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: _buildPanel(
                           title: 'Markdown',
                           controller: _leftTextController,
-                          onGeneratePress: () {
-                            if (_selectedReleasePage != null) {
-                              final String fullUrl =
-                                  DocsConfig.getReleaseNotesUrl(
-                                      _selectedReleasePage!);
-                              print('Fetching release notes from: $fullUrl');
-                              // Future implementation will use this URL to fetch the content
-                            }
-                            print(
-                                'Generating release notes for: $_selectedReleasePage');
-                          },
+                          onGeneratePress: _fetchReleaseNotes,
                           onCopyPress: () {
                             // Add copy logic here
                           },
@@ -175,9 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           title: 'Plain Text',
                           controller: _rightTextController,
                           onGeneratePress: () {
-                            // Add generation logic here
-                            print(
-                                'Generating summary for: $_selectedReleasePage');
+                            // Add plain text conversion logic here
                           },
                           onCopyPress: () {
                             // Add copy logic here
