@@ -1,9 +1,10 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
-import '../widgets/content_panel.dart';
 import '../widgets/release_selector.dart';
 import '../widgets/theme_switcher.dart';
 import '../services/url_fetcher.dart';
+import 'markdown_screen.dart';
+import 'plain_text_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,42 +16,66 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isDarkMode = false;
   String? _selectedReleasePage;
-  final TextEditingController _leftTextController = TextEditingController();
-  final TextEditingController _rightTextController = TextEditingController();
-  bool _isLoading = false;
-  String? _errorMessage;
   final UrlFetcherService _urlFetcher = UrlFetcherService();
 
-  @override
-  void dispose() {
-    _leftTextController.dispose();
-    _rightTextController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _fetchReleaseNotes() async {
+  Future<void> _fetchAndNavigate(BuildContext context, bool isMarkdown) async {
     if (_selectedReleasePage == null) return;
 
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
 
     try {
       final content =
           await _urlFetcher.fetchReleaseNotes(_selectedReleasePage!);
-      setState(() {
-        _leftTextController.text = content;
-        _rightTextController.text = content;
-      });
+
+      // Pop the loading dialog
+      Navigator.pop(context);
+
+      // Navigate to the appropriate screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => isMarkdown
+              ? MarkdownScreen(
+                  content: content.toString(),
+                  releaseVersion: _selectedReleasePage!,
+                )
+              : PlainTextScreen(
+                  content: content.toString(),
+                  releaseVersion: _selectedReleasePage!,
+                ),
+        ),
+      );
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to fetch release notes: $e';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      // Pop the loading dialog
+      Navigator.pop(context);
+
+      // Show error dialog
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: Text('Failed to fetch release notes: $e'),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
@@ -77,44 +102,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() => _selectedReleasePage = release);
                 },
               ),
-              if (_errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
               if (_selectedReleasePage != null)
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: ContentPanel(
-                          title: 'Markdown',
-                          controller: _leftTextController,
-                          onGeneratePress: _fetchReleaseNotes,
-                          onCopyPress: () {
-                            // TODO: Implement copy
-                          },
-                          isLoading: _isLoading,
-                        ),
+                      ElevatedButton(
+                        onPressed: () => _fetchAndNavigate(context, true),
+                        child: const Text('View Markdown'),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ContentPanel(
-                          title: 'Plain Text',
-                          controller: _rightTextController,
-                          onGeneratePress: () {
-                            // TODO: Implement plain text conversion
-                          },
-                          onCopyPress: () {
-                            // TODO: Implement copy
-                          },
-                          isLoading: _isLoading,
-                        ),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => _fetchAndNavigate(context, false),
+                        child: const Text('View Plain Text'),
                       ),
                     ],
                   ),
