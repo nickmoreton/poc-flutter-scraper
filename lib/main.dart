@@ -12,7 +12,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Generate Docs Summary',
+      title: 'Generate Wagtail Docs Release Notes Summary',
       home: const HomeScreen(),
     );
   }

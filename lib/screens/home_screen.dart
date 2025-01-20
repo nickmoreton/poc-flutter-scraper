@@ -87,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
       theme: _isDarkMode ? ThemeData.dark() : ThemeData.light(),
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Generate Docs Summary'),
+          title: const Text('Wagtail CMS'),
           actions: [
             ThemeSwitcher(
               isDarkMode: _isDarkMode,
@@ -120,6 +120,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ],
                   ),
+                )
+              else
+                Column(
+                  children: const [
+                    SizedBox(height: 16),
+                    Text(
+                      'Select a release to get started.',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                        'You will then be able to view the release notes \n in Markdown or plain text format.',
+                        textAlign: TextAlign.center),
+                  ],
                 ),
             ],
           ),
