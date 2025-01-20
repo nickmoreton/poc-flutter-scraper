@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../config.dart';
 
 class MarkdownScreen extends StatelessWidget {
   final String content;
@@ -13,9 +14,13 @@ class MarkdownScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Look up the display value using the releaseVersion (key)
+    final String displayTitle =
+        wagtailReleases[releaseVersion] ?? releaseVersion;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Markdown View - $releaseVersion'),
+        title: Text('Markdown View - $displayTitle'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
